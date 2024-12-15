@@ -1,10 +1,19 @@
 module Main where
 
-import Control.Exception (catch)
+import Control.Exception (catch, throw)
 import System.Environment (getArgs)
 import System.Exit
-import System.IO (Handle, IOMode(ReadMode), hClose, hGetLine, openFile, stdin)
+import System.IO (Handle, IOMode(ReadMode), hGetLine, openFile, stdin)
 import System.IO.Error (isEOFError)
+
+report :: Int -> String -> String -> IO ()
+report line whr message =
+  putStrLn $ "[line " ++ show line ++ "] Error" ++ whr ++ ": " ++ message
+
+err :: Int -> String -> IO ()
+err line msg = do
+  report line "" msg
+  ioError . userError $ "Execution error"
 
 run :: String -> IO ()
 run code = do
@@ -18,17 +27,22 @@ runHandle :: Handle -> IO ()
 runHandle handle = do
   catch (mapM_ (>>= run) (readLines handle))
     (\e -> do
-      hClose handle
       if isEOFError e
          then exitSuccess
-         else exitFailure)
+         else throw e)
 
 runFile :: String -> IO ()
 runFile fileName =
-  openFile fileName ReadMode >>= runHandle
+  catch (openFile fileName ReadMode >>= runHandle) handler
+  where
+    handler :: IOError -> IO ()
+    handler = const exitFailure
 
 runPrompt :: IO ()
-runPrompt = runHandle stdin
+runPrompt = catch (runHandle stdin) handler
+  where
+    handler :: IOError -> IO ()
+    handler = const $ runHandle stdin
 
 printUsage :: IO ()
 printUsage = do
