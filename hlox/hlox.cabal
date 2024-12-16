@@ -54,6 +54,25 @@ build-type:         Simple
 common warnings
     ghc-options: -Wall
 
+library
+    -- Import common warning flags.
+    import:           warnings
+
+    exposed-modules:  Token
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+
+    -- Other library packages from which modules are imported.
+    build-depends:    base ^>=4.17.2.1
+
+    -- Directories containing source files.
+    hs-source-dirs:   lib
+
+    -- Base language which the package is written in.
+    default-language: Haskell2010
+
+
 executable hlox
     -- Import common warning flags.
     import:           warnings
