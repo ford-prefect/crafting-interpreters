@@ -4,7 +4,7 @@ import Control.Exception (catch, throw)
 import System.Environment (getArgs)
 import System.Exit
 import System.IO (Handle, IOMode(ReadMode), hGetLine, openFile, stdin)
-import System.IO.Error (isEOFError)
+import System.IO.Error (isEOFError, isUserError)
 
 report :: Int -> String -> String -> IO ()
 report line whr message =
@@ -36,13 +36,21 @@ runFile fileName =
   catch (openFile fileName ReadMode >>= runHandle) handler
   where
     handler :: IOError -> IO ()
-    handler = const exitFailure
+    handler e = do
+      putStrLn $ "Error: " ++ show e
+      exitFailure
 
 runPrompt :: IO ()
-runPrompt = catch (runHandle stdin) handler
+runPrompt = catch runIt handler
   where
+    runIt = runHandle stdin
     handler :: IOError -> IO ()
-    handler = const $ runHandle stdin
+    handler e =
+      if isUserError e
+         then runIt -- the error was printed already, go again
+         else do
+           putStrLn ("Exception: " ++ show e)
+           runIt
 
 printUsage :: IO ()
 printUsage = do
