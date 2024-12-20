@@ -3,7 +3,7 @@ module Main where
 import Control.Exception (catch, throw)
 import System.Environment (getArgs)
 import System.Exit
-import System.IO (Handle, IOMode(ReadMode), hGetLine, openFile, stdin)
+import System.IO (Handle, IOMode (ReadMode), hGetLine, openFile, stdin)
 import System.IO.Error (isEOFError, isUserError)
 
 report :: Int -> String -> String -> IO ()
@@ -25,11 +25,13 @@ readLines handle = do
 
 runHandle :: Handle -> IO ()
 runHandle handle = do
-  catch (mapM_ (>>= run) (readLines handle))
-    (\e -> do
-      if isEOFError e
-         then exitSuccess
-         else throw e)
+  catch
+    (mapM_ (>>= run) (readLines handle))
+    ( \e -> do
+        if isEOFError e
+          then exitSuccess
+          else throw e
+    )
 
 runFile :: String -> IO ()
 runFile fileName =
@@ -47,10 +49,10 @@ runPrompt = catch runIt handler
     handler :: IOError -> IO ()
     handler e =
       if isUserError e
-         then runIt -- the error was printed already, go again
-         else do
-           putStrLn ("Exception: " ++ show e)
-           runIt
+        then runIt -- the error was printed already, go again
+        else do
+          putStrLn ("Exception: " ++ show e)
+          runIt
 
 printUsage :: IO ()
 printUsage = do
@@ -60,6 +62,9 @@ printUsage = do
 main :: IO ()
 main = do
   args <- getArgs
-  if length args > 1 then printUsage
-  else if length args == 1 then runFile $ head args
-  else runPrompt
+  if length args > 1
+    then printUsage
+    else
+      if length args == 1
+        then runFile $ head args
+        else runPrompt
