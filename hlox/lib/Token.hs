@@ -29,7 +29,7 @@ data TokenType
     And
   | Class
   | Else
-  | False
+  | False_
   | Fun
   | For
   | If
@@ -38,15 +38,17 @@ data TokenType
   | Print
   | Return
   | Super
-  | True
+  | True_
   | Var
   | While
   | -- That's it
     Eof
+  deriving (Eq, Show)
 
 data Token = Token
   { tokenType :: TokenType,
-    tokenLexeme :: String,
-    -- literal :: is embedded in the TokenType
+    -- lexeme :: is embedded in the TokenType where needed
+    -- literal :: is embedded in the TokenType where needed
     tokenLine :: Int
   }
+  deriving (Eq, Show)

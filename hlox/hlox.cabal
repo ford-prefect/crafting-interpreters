@@ -59,6 +59,8 @@ library
     import:           warnings
 
     exposed-modules:  Token
+                    , Scanner
+                    , Parser
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
