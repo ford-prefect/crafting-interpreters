@@ -3,8 +3,10 @@ module Main where
 import Control.Exception (catch, throw)
 import System.Environment (getArgs)
 import System.Exit
-import System.IO (Handle, IOMode (ReadMode), hGetLine, openFile, stdin)
+import System.IO (Handle, IOMode (ReadMode), hGetLine, openFile, stdin, hGetContents)
 import System.IO.Error (isEOFError, isUserError)
+
+import Scanner
 
 report :: Int -> String -> String -> IO ()
 report line whr message =
@@ -16,8 +18,20 @@ err line msg = do
   ioError . userError $ "Execution error"
 
 run :: String -> IO ()
-run code = do
-  putStrLn ("Running line: " ++ code)
+run code =
+  let (mErr, tokens) = scan code
+   in do
+     print mErr
+     print tokens
+
+runFile :: String -> IO ()
+runFile fileName =
+  catch (openFile fileName ReadMode >>= hGetContents >>= run) handler
+  where
+    handler :: IOError -> IO ()
+    handler e = do
+      putStrLn $ "Error: " ++ show e
+      exitFailure
 
 readLines :: Handle -> [IO String]
 readLines handle = do
@@ -32,15 +46,6 @@ runHandle handle = do
           then exitSuccess
           else throw e
     )
-
-runFile :: String -> IO ()
-runFile fileName =
-  catch (openFile fileName ReadMode >>= runHandle) handler
-  where
-    handler :: IOError -> IO ()
-    handler e = do
-      putStrLn $ "Error: " ++ show e
-      exitFailure
 
 runPrompt :: IO ()
 runPrompt = catch runIt handler
