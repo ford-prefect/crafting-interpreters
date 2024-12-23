@@ -87,7 +87,7 @@ scanKeywords = scanMultiChar keywords
 
 scanComment :: Parser String ()
 scanComment =
-  word "//" $> many (satisfy (/= '\n')) $> char '\n' $> ()
+  (word "//" *> many (satisfy (/= '\n')) *> char '\n') $> ()
 
 scanString :: Int -> Parser String Token
 scanString line =
