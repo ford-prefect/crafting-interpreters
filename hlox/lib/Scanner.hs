@@ -6,9 +6,10 @@ where
 
 import Control.Applicative (Alternative (many, some), (<|>))
 import Data.Char (isAlpha, isAlphaNum)
-import Data.Functor (($>))
+import Data.Functor (($>), (<&>))
 import Parser
 import Token
+import Data.List (elemIndices)
 
 data Error = Error
   { errorLine :: Int,
@@ -89,9 +90,13 @@ scanComment :: Parser String ()
 scanComment =
   (word "//" *> many (satisfy (/= '\n')) *> char '\n') $> ()
 
-scanString :: Int -> Parser String Token
+scanString :: Int -> Parser String (Token, Int)
 scanString line =
-  char '"' *> (Token <$> (Str <$> many (satisfy (/= '"')) <* char '"') <*> pure line)
+  scanStringToQuote <&> countNewlines
+  where
+    scanStringToQuote = char '"' *> (Token <$> (Str <$> many (satisfy (/= '"')) <* char '"') <*> pure line)
+    countNewlines (Token (Str s) l) = (Token (Str s) l, l + length (elemIndices '\n' s))
+    countNewlines _ = error "countNewlines will only be called with an Str"
 
 isSpace :: Char -> Bool
 isSpace c = c == ' ' || c == '\r' || c == '\t'
@@ -119,7 +124,7 @@ scanIdentifier line = Token . Identifier <$> ((:) <$> satisfy isIdPrefix <*> man
 
 scanToken :: Int -> Parser String Token
 scanToken line =
-  scanKeywords line <|> scanIdentifier line <|> scanNumber line <|> scanString line <|> scanTwoChars line <|> scanSingleChar line
+  scanKeywords line <|> scanIdentifier line <|> scanNumber line <|> scanTwoChars line <|> scanSingleChar line
 
 scan' :: Int -> String -> (Maybe Error, [Token])
 scan' line "" = (Nothing, [Token Eof line])
@@ -128,10 +133,13 @@ scan' line s@(c : _)
   | isSpace c =
       let rest = snd $ runParser (some scanSpace) s
        in scan' line rest
+scan' line s@('"' : _) = case runParser (scanString line) s of
+  (Just (t, line'), rest) -> (t :) <$> scan' line' rest
+  (Nothing, _) -> (Just $ Error line "Unterminated string", [])
 scan' line s = case runParser scanComment s of
-  (Just _, rest') -> scan' (line + 1) rest'
+  (Just _, rest) -> scan' (line + 1) rest
   (Nothing, _) -> case runParser (scanToken line) s of
-    (Just t, rest') -> (t :) <$> scan' line rest'
+    (Just t, rest) -> (t :) <$> scan' line rest
     (Nothing, _) -> (Just $ Error line ("Unexpected character" ++ [head s]), [])
 
 scan :: String -> (Maybe Error, [Token])
