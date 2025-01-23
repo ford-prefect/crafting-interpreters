@@ -51,7 +51,7 @@ class ASTVisitor a where
   visitLiteral :: LiteralExpr -> a
   visitUnary :: UnaryExpr -> a
 
-runASTVisitor :: ASTVisitor a => Expr -> a
+runASTVisitor :: (ASTVisitor a) => Expr -> a
 runASTVisitor (Binary e) = visitBinary e
 runASTVisitor (Grouping e) = visitGrouping e
 runASTVisitor (Literal e) = visitLiteral e
