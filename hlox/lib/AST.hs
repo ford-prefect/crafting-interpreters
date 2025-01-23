@@ -1,29 +1,49 @@
 module AST where
 
-import Token (Token)
-
 data Expr
   = Binary BinaryExpr
   | Grouping GroupingExpr
   | Literal LiteralExpr
   | Unary UnaryExpr
+  deriving (Show)
 
--- FIXME: Can we narrow tokens below to only valid tokens?
+data BinaryOp
+  = Add
+  | Subtract
+  | Multiply
+  | Divide
+  deriving (Show)
+
+data UnaryOp
+  = Negate
+  | Not
+  deriving (Show)
+
+data Literal
+  = Number Double
+  | String String
+  | Boolean Bool
+  | Nil
+  deriving (Show)
 
 data BinaryExpr = BinaryExpr
   { binaryExprLeft :: Expr,
     binaryExprRight :: Expr,
-    binaryExprOp :: Token
+    binaryExprOp :: BinaryOp
   }
+  deriving (Show)
 
 newtype GroupingExpr = GroupingExpr Expr
+  deriving (Show)
 
-newtype LiteralExpr = LiteralExpr Token
+newtype LiteralExpr = LiteralExpr Literal
+  deriving (Show)
 
 data UnaryExpr = UnaryExpr
   { unaryExprExp :: Expr,
-    unaryExprOp :: Token
+    unaryExprOp :: UnaryOp
   }
+  deriving (Show)
 
 class ASTVisitor a where
   visitBinary :: BinaryExpr -> a
