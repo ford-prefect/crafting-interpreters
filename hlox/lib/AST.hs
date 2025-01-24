@@ -7,11 +7,29 @@ data Expr
   | Unary UnaryExpr
   deriving (Show)
 
-data BinaryOp
+data EqualityOp
+  = IsEqual
+  | NotEqual
+  deriving (Show)
+
+data ComparisonOp
+  = Greater
+  | GreaterEqual
+  | Less
+  | LessEqual
+  deriving (Show)
+
+data ArithmeticOp
   = Add
   | Subtract
   | Multiply
   | Divide
+  deriving (Show)
+
+data BinaryOp
+  = Equality EqualityOp
+  | Comparison ComparisonOp
+  | Arithmetic ArithmeticOp
   deriving (Show)
 
 data UnaryOp
@@ -23,7 +41,9 @@ data Literal
   = Number Double
   | String String
   | Boolean Bool
-  | Nil
+  | LitTrue
+  | LitFalse
+  | LitNil
   deriving (Show)
 
 data BinaryExpr = BinaryExpr
