@@ -9,7 +9,7 @@ import Data.Char (isAlpha, isAlphaNum)
 import Data.Functor (($>), (<&>))
 import Parser
 import Token
-import Data.List (elemIndices)
+import Data.List (elemIndices, find, isPrefixOf)
 
 data Error = Error
   { errorLine :: Int,
@@ -76,8 +76,8 @@ scanSingleChar line =
 scanMultiChar :: [(String, TokenType)] -> Int -> Parser String Token
 scanMultiChar set line =
   Parser $ \input ->
-    case lookup input set of
-      Just t -> (Just (Token t line), "")
+    case find (\(s, _) -> s `isPrefixOf` input) set of
+      Just (s, t) -> (Just (Token t line), drop (length s) input)
       Nothing -> (Nothing, input)
 
 scanTwoChars :: Int -> Parser String Token
