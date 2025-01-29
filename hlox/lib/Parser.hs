@@ -24,6 +24,13 @@ instance Applicative (Parser i) where
         (Nothing, _) -> (Nothing, input)
         (Just o, rest') -> (Just (f o), rest')
 
+instance Monad (Parser i) where
+  (>>=) :: Parser i o -> (o -> Parser i o') -> Parser i o'
+  (>>=) p f = Parser $ \input ->
+    case runParser p input of
+      (Nothing, _) -> (Nothing, input)
+      (Just o, rest) -> runParser (f o) rest
+
 instance Alternative (Parser i) where
   -- Parse nothing, return the input as is
   empty = Parser (Nothing,)

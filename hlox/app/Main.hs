@@ -7,6 +7,7 @@ import System.IO (Handle, IOMode (ReadMode), hGetLine, openFile, stdin, hGetCont
 import System.IO.Error (isEOFError, isUserError)
 
 import Scanner
+import AST
 
 report :: Int -> String -> String -> IO ()
 report line whr message =
@@ -20,9 +21,12 @@ err line msg = do
 run :: String -> IO ()
 run code =
   let (mErr, tokens) = scan code
+      (mExpr, mLine) = parse tokens
    in do
      print mErr
      print tokens
+     print $ prettyPrint <$> mExpr
+     print mLine
 
 runFile :: String -> IO ()
 runFile fileName =
