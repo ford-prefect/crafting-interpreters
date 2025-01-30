@@ -89,7 +89,7 @@ runASTVisitor (Unary e) = visitUnary e
 
 instance ASTVisitor String where
   visitBinary (BinaryExpr left right op) =
-    runASTVisitor left ++ " " ++ show op ++ " " ++ runASTVisitor right
+    "(" ++ runASTVisitor left ++ " " ++ show op ++ " " ++ runASTVisitor right ++ ")"
   visitGrouping (GroupingExpr e) = "Group( " ++ runASTVisitor e ++ " )"
   visitLiteral (LiteralExpr t) = show t
   visitUnary (UnaryExpr expr op) = show op ++ " " ++ runASTVisitor expr
