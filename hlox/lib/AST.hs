@@ -115,7 +115,8 @@ parsePrimary = parseConstant <|> parseLiteral <|> parseGrouping
       (t@(T.Token (T.Num n) _) : rest) -> (Just . Literal t . LiteralExpr . Number $ n, rest)
       (t@(T.Token (T.Str s) _) : rest) -> (Just . Literal t . LiteralExpr . String $ s, rest)
       _ -> (Nothing, tokens)
-    parseGrouping = matchToken T.LeftParen *> parseExpression <* matchToken T.RightParen
+    parseGrouping =
+      matchToken T.LeftParen >>= (\t -> Grouping t . GroupingExpr <$> (parseExpression <* matchToken T.RightParen))
 
 -- unary          → ( "!" | "-" ) unary
 --               | primary ;
