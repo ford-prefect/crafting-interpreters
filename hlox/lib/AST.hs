@@ -6,15 +6,14 @@ module AST
 where
 
 import Control.Applicative
-import Data.Functor
 import Parser
 import Token qualified as T
 
 data Expr
-  = Binary BinaryExpr
-  | Grouping GroupingExpr
-  | Literal LiteralExpr
-  | Unary UnaryExpr
+  = Binary T.Token BinaryExpr
+  | Grouping T.Token GroupingExpr
+  | Literal T.Token LiteralExpr
+  | Unary T.Token UnaryExpr
   deriving (Show)
 
 data EqualityOp
@@ -50,7 +49,6 @@ data UnaryOp
 data Literal
   = Number Double
   | String String
-  | Boolean Bool
   | LitTrue
   | LitFalse
   | LitNil
@@ -76,23 +74,23 @@ data UnaryExpr = UnaryExpr
   deriving (Show)
 
 class ASTVisitor a where
-  visitBinary :: BinaryExpr -> a
-  visitGrouping :: GroupingExpr -> a
-  visitLiteral :: LiteralExpr -> a
-  visitUnary :: UnaryExpr -> a
+  visitBinary :: T.Token -> BinaryExpr -> a
+  visitGrouping :: T.Token -> GroupingExpr -> a
+  visitLiteral :: T.Token -> LiteralExpr -> a
+  visitUnary :: T.Token -> UnaryExpr -> a
 
 runASTVisitor :: (ASTVisitor a) => Expr -> a
-runASTVisitor (Binary e) = visitBinary e
-runASTVisitor (Grouping e) = visitGrouping e
-runASTVisitor (Literal e) = visitLiteral e
-runASTVisitor (Unary e) = visitUnary e
+runASTVisitor (Binary t e) = visitBinary t e
+runASTVisitor (Grouping t e) = visitGrouping t e
+runASTVisitor (Literal t e) = visitLiteral t e
+runASTVisitor (Unary t e) = visitUnary t e
 
 instance ASTVisitor String where
-  visitBinary (BinaryExpr left right op) =
+  visitBinary _ (BinaryExpr left right op) =
     "(" ++ runASTVisitor left ++ " " ++ show op ++ " " ++ runASTVisitor right ++ ")"
-  visitGrouping (GroupingExpr e) = "Group( " ++ runASTVisitor e ++ " )"
-  visitLiteral (LiteralExpr t) = show t
-  visitUnary (UnaryExpr expr op) = show op ++ " " ++ runASTVisitor expr
+  visitGrouping _ (GroupingExpr e) = "Group( " ++ runASTVisitor e ++ " )"
+  visitLiteral _ (LiteralExpr t) = show t
+  visitUnary _ (UnaryExpr expr op) = show op ++ " " ++ runASTVisitor expr
 
 prettyPrint :: Expr -> String
 prettyPrint = runASTVisitor
@@ -102,7 +100,7 @@ matchToken typ = satisfy (\t -> T.tokenType t == typ)
 
 parseBinaryExpr :: T.TokenType -> BinaryOp -> Expr -> Parser [T.Token] Expr -> Parser [T.Token] Expr
 parseBinaryExpr token op left parseRight =
-  matchToken token *> (Binary <$> (BinaryExpr left <$> parseRight <*> pure op))
+  matchToken token >>= (\t -> Binary t <$> (BinaryExpr left <$> parseRight <*> pure op))
 
 -- primary        → NUMBER | STRING | "true" | "false" | "nil"
 --               | "(" expression ")" ;
@@ -110,12 +108,12 @@ parsePrimary :: Parser [T.Token] Expr
 parsePrimary = parseConstant <|> parseLiteral <|> parseGrouping
   where
     parseConstant =
-      (matchToken T.False_ $> (Literal . LiteralExpr $ LitFalse))
-        <|> (matchToken T.True_ $> (Literal . LiteralExpr $ LitTrue))
-        <|> (matchToken T.Nil $> (Literal . LiteralExpr $ LitNil))
+      (matchToken T.False_ >>= (\t -> pure . Literal t . LiteralExpr $ LitFalse))
+        <|> (matchToken T.True_ >>= (\t -> pure . Literal t . LiteralExpr $ LitTrue))
+        <|> (matchToken T.Nil >>= (\t -> pure . Literal t . LiteralExpr $ LitNil))
     parseLiteral = Parser $ \tokens -> case tokens of
-      (T.Token (T.Num n) _ : rest) -> (Just . Literal . LiteralExpr . Number $ n, rest)
-      (T.Token (T.Str s) _ : rest) -> (Just . Literal . LiteralExpr . String $ s, rest)
+      (t@(T.Token (T.Num n) _) : rest) -> (Just . Literal t . LiteralExpr . Number $ n, rest)
+      (t@(T.Token (T.Str s) _) : rest) -> (Just . Literal t . LiteralExpr . String $ s, rest)
       _ -> (Nothing, tokens)
     parseGrouping = matchToken T.LeftParen *> parseExpression <* matchToken T.RightParen
 
@@ -123,8 +121,8 @@ parsePrimary = parseConstant <|> parseLiteral <|> parseGrouping
 --               | primary ;
 parseUnary :: Parser [T.Token] Expr
 parseUnary =
-  matchToken T.Bang *> (Unary <$> (UnaryExpr <$> parseUnary <*> pure Not))
-    <|> matchToken T.Minus *> (Unary <$> (UnaryExpr <$> parseUnary <*> pure Negate))
+  (matchToken T.Bang >>= (\t -> Unary t <$> (UnaryExpr <$> parseUnary <*> pure Not)))
+    <|> (matchToken T.Minus >>= (\t -> Unary t <$> (UnaryExpr <$> parseUnary <*> pure Negate)))
     <|> parsePrimary
 
 -- factor         → unary ( ( "/" | "*" ) unary )* ;
