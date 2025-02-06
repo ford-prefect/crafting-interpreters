@@ -8,6 +8,7 @@ import System.IO.Error (isEOFError, isUserError)
 
 import Scanner
 import AST
+import Interpreter
 
 report :: Int -> String -> String -> IO ()
 report line whr message =
@@ -27,6 +28,7 @@ run code =
      print tokens
      print $ prettyPrint <$> mExpr
      print mLine
+     print $ interpret <$> mExpr
 
 runFile :: String -> IO ()
 runFile fileName =

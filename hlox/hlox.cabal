@@ -62,6 +62,7 @@ library
                     , Scanner
                     , Parser
                     , AST
+                    , Interpreter
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

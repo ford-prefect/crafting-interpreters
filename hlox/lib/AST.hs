@@ -1,7 +1,19 @@
 module AST
-  ( ASTVisitor,
+  ( ASTVisitor (..),
+    ArithmeticOp (..),
+    BinaryOp (..),
+    BinaryExpr (..),
+    ComparisonOp (..),
+    Expr (..),
+    EqualityOp (..),
+    GroupingExpr (..),
+    Literal (..),
+    LiteralExpr (..),
+    UnaryExpr (..),
+    UnaryOp (..),
     parse,
     prettyPrint,
+    runASTVisitor,
   )
 where
 
